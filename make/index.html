@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tải File MOD</title>
+    <meta name="referrer" content="no-referrer">
+    <script disable-devtool-auto src='https://cdn.jsdelivr.net/npm/disable-devtool'></script>
+    
+    <style>
+		html, body {
+			margin: 0;
+			padding: 0;
+			height: 100%;
+			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+			color: #4a0033;
+			overflow: hidden;
+		}
+
+		body {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			position: relative;
+		}
+
+		/* Video nền */
+        #bg-video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            z-index: -2;
+        }
+
+        /* Lớp phủ đã bị làm trong suốt (Background removed/made transparent) */
+        #video-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            /* ĐÃ SỬA: Bỏ màu nền làm mờ đi */
+            background-color: transparent; 
+            z-index: -1;
+        }
+
+		/* Khung chứa chính */
+		#main-box {
+			background: rgba(255, 255, 255, 0.25); 
+			backdrop-filter: blur(15px);
+			-webkit-backdrop-filter: blur(15px);
+			border: 1px solid rgba(255, 255, 255, 0.3);
+			border-radius: 24px;
+			padding: 40px 30px;
+			box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+			width: 100%;
+			max-width: 420px;
+			text-align: center;
+		}
+
+		h2 {
+			color: #fff;
+			text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+			margin-bottom: 25px;
+		}
+
+		/* Style Input */
+		#mainLink {
+			width: 100%;
+			padding: 12px 15px;
+			margin-bottom: 20px;
+			border: none;
+			border-radius: 12px;
+			background: rgba(255, 255, 255, 0.8);
+			box-sizing: border-box;
+			font-size: 14px;
+			outline: none;
+			transition: 0.3s;
+		}
+
+		#mainLink:focus {
+			background: #fff;
+			box-shadow: 0 0 10px rgba(255, 2, 145, 0.5);
+		}
+
+		/* Style Options/Checkboxes */
+		.options {
+			text-align: left;
+			margin-bottom: 20px;
+			background: rgba(255, 255, 255, 0.2);
+			padding: 15px;
+			border-radius: 12px;
+		}
+
+		.options label {
+			display: block;
+			margin: 10px 0;
+			cursor: pointer;
+			font-weight: 500;
+			color: #fff;
+			font-size: 15px;
+		}
+
+		input[type="checkbox"] {
+			accent-color: #ff0291;
+			transform: scale(1.2);
+			margin-right: 10px;
+		}
+
+		/* Style Button chính */
+		.btn-main {
+			width: 100%;
+			background: linear-gradient(45deg, #ff0291, #ff6db3);
+			color: #fff;
+			padding: 15px;
+			border: none;
+			border-radius: 12px;
+			font-weight: bold;
+			font-size: 16px;
+			cursor: pointer;
+			transition: 0.3s;
+			text-transform: uppercase;
+			letter-spacing: 1px;
+		}
+
+		.btn-main:hover {
+			transform: scale(1.02);
+			box-shadow: 0 5px 15px rgba(255, 2, 145, 0.4);
+		}
+
+		/* Box kết quả */
+		#resultContainer {
+			margin-top: 25px;
+			padding: 15px;
+			background: rgba(0, 0, 0, 0.6);
+			border-radius: 15px;
+			color: #00ffcc;
+			animation: fadeIn 0.5s ease;
+		}
+
+		#finalLink {
+			display: block;
+			word-break: break-all;
+			font-family: monospace;
+			margin-bottom: 15px;
+			font-size: 13px;
+			background: rgba(255, 255, 255, 0.1);
+			padding: 10px;
+			border-radius: 8px;
+		}
+
+		.btn-copy {
+			background: #00ffcc;
+			color: #000;
+			border: none;
+			padding: 8px 20px;
+			border-radius: 8px;
+			font-weight: bold;
+			cursor: pointer;
+			width: auto;
+		}
+
+		@keyframes fadeIn {
+			from { opacity: 0; transform: translateY(10px); }
+			to { opacity: 1; transform: translateY(0); }
+		}
+		
+		/* Style cho thông báo Popup */
+		.toast {
+			visibility: hidden; /* Mặc định ẩn */
+			min-width: 200px;
+			background-color: rgba(0, 0, 0, 0.8); /* Màu đen trong suốt */
+			color: #fff;
+			text-align: center;
+			border-radius: 8px;
+			padding: 12px;
+			position: fixed;
+			z-index: 100; /* Nằm trên cùng */
+			left: 50%;
+			bottom: 30px;
+			transform: translateX(-50%); /* Căn giữa màn hình */
+			font-size: 14px;
+			transition: opacity 0.4s, visibility 0.4s;
+			opacity: 0;
+		}
+
+		/* Khi có class "show" thì hiện lên */
+		.toast.show {
+			visibility: visible;
+			opacity: 1;
+		}
+	</style>
+
+<body>
+    <video id="bg-video" autoplay muted loop playsinline>
+        <source src="https://han24521100.github.io/MakeMenoy/columbina.mp4" type="video/mp4">
+    </video>
+    <div id="video-overlay"></div>
+
+    <div id="main-box">
+        <h2>CÔNG CỤ TẠO LINK MOD</h2>
+        
+        <input type="text" id="mainLink" placeholder="Dán link gốc vào đây...">
+
+        <div class="options">
+            <label>
+                <input type="checkbox" id="optPrefix"> Pmin Mod (Sub)
+            </label>
+            <label>
+                <input type="checkbox" id="optUppercase"> Ngân Ngân Mod (Main)
+            </label>
+        </div>
+        
+        <button class="btn-main" onclick="processLink()">
+            Bắt Đầu Mã Hóa
+        </button>
+
+        <div id="resultContainer" style="display: none;">
+            <p style="color: #eee; font-size: 14px; margin-top: 0;">Link đã sẵn sàng:</p>
+            <span id="finalLink"></span>
+            <button class="btn-copy" onclick="copyToClipboard()">SAO CHÉP LINK</button>
+        </div>
+    </div>
+	<div id="toast" class="toast">Đã sao chép liên kết!</div>
+	
+    <script>
+        // Giữ nguyên phần Script của bạn, chỉ thêm class CSS cho nút
+        const ngannganmod = "https://han24521100.github.io/MakeMenoy/?data="; 
+        const pminmod = "https://han24521100.github.io/MakeMenoy/sub/?data=";
+
+        function processLink() {
+            const mainLink = document.getElementById("mainLink").value;
+            const isPmin = document.getElementById("optPrefix").checked;
+            const isNgan = document.getElementById("optUppercase").checked;
+            
+            if (!mainLink) {
+                alert("Vui lòng nhập link!");
+                return;
+            }
+
+            try {
+                let encodedLink = btoa(mainLink);
+                let finalResult = "";
+
+                // Logic: Nếu chọn cả 2 hoặc chọn từng cái
+				if (isNgan && isPmin){
+					finalResult = ngannganmod + encodedLink;
+				}
+                else if (isNgan) {
+                    finalResult = ngannganmod + encodedLink;
+                } else if (isPmin) {
+                    finalResult = pminmod + encodedLink;
+                } else {
+                    finalResult = pminmod + encodedLink;
+                }
+
+                document.getElementById("finalLink").innerText = finalResult;
+                document.getElementById("resultContainer").style.display = "block";
+                
+            } catch (e) {
+                alert("Lỗi mã hóa! Link không được chứa ký tự tiếng Việt có dấu.");
+            }
+        }
+
+        function copyToClipboard() {
+			const text = document.getElementById("finalLink").innerText;
+			
+			// Thực hiện Copy
+			navigator.clipboard.writeText(text).then(() => {
+				// Hiển thị Popup
+				const toast = document.getElementById("toast");
+				toast.className = "toast show";
+				
+				// Sau 2 giây (2000ms) thì tự tắt
+				setTimeout(function() {
+					toast.className = toast.className.replace("show", "");
+				}, 2000);
+			});
+		}
+    </script>
+</body>
+
+</html>
+
