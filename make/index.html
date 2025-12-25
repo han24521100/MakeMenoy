@@ -25,8 +25,7 @@
 			position: relative;
 		}
 
-		/* Video nền */
-        #bg-video {
+		#bg-video {
             position: fixed;
             top: 0;
             left: 0;
@@ -36,19 +35,16 @@
             z-index: -2;
         }
 
-        /* Lớp phủ đã bị làm trong suốt (Background removed/made transparent) */
         #video-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            /* ĐÃ SỬA: Bỏ màu nền làm mờ đi */
             background-color: transparent; 
             z-index: -1;
         }
 
-		/* Khung chứa chính */
 		#main-box {
 			background: rgba(255, 255, 255, 0.25); 
 			backdrop-filter: blur(15px);
@@ -68,7 +64,6 @@
 			margin-bottom: 25px;
 		}
 
-		/* Style Input */
 		#mainLink {
 			width: 100%;
 			padding: 12px 15px;
@@ -87,7 +82,6 @@
 			box-shadow: 0 0 10px rgba(255, 2, 145, 0.5);
 		}
 
-		/* Style Options/Checkboxes */
 		.options {
 			text-align: left;
 			margin-bottom: 20px;
@@ -111,7 +105,6 @@
 			margin-right: 10px;
 		}
 
-		/* Style Button chính */
 		.btn-main {
 			width: 100%;
 			background: linear-gradient(45deg, #ff0291, #ff6db3);
@@ -132,7 +125,11 @@
 			box-shadow: 0 5px 15px rgba(255, 2, 145, 0.4);
 		}
 
-		/* Box kết quả */
+		.btn-main:disabled {
+			opacity: 0.6;
+			cursor: not-allowed;
+		}
+
 		#resultContainer {
 			margin-top: 25px;
 			padding: 15px;
@@ -169,31 +166,44 @@
 			to { opacity: 1; transform: translateY(0); }
 		}
 		
-		/* Style cho thông báo Popup */
 		.toast {
-			visibility: hidden; /* Mặc định ẩn */
+			visibility: hidden;
 			min-width: 200px;
-			background-color: rgba(0, 0, 0, 0.8); /* Màu đen trong suốt */
+			background-color: rgba(0, 0, 0, 0.8);
 			color: #fff;
 			text-align: center;
 			border-radius: 8px;
 			padding: 12px;
 			position: fixed;
-			z-index: 100; /* Nằm trên cùng */
+			z-index: 100;
 			left: 50%;
 			bottom: 30px;
-			transform: translateX(-50%); /* Căn giữa màn hình */
+			transform: translateX(-50%);
 			font-size: 14px;
 			transition: opacity 0.4s, visibility 0.4s;
 			opacity: 0;
 		}
 
-		/* Khi có class "show" thì hiện lên */
 		.toast.show {
 			visibility: visible;
 			opacity: 1;
 		}
+
+		.loading {
+			display: inline-block;
+			width: 16px;
+			height: 16px;
+			border: 3px solid rgba(255,255,255,.3);
+			border-radius: 50%;
+			border-top-color: #fff;
+			animation: spin 1s ease-in-out infinite;
+		}
+
+		@keyframes spin {
+			to { transform: rotate(360deg); }
+		}
 	</style>
+</head>
 
 <body>
     <video id="bg-video" autoplay muted loop playsinline>
@@ -228,61 +238,101 @@
 	<div id="toast" class="toast">Đã sao chép liên kết!</div>
 	
     <script>
-        // Giữ nguyên phần Script của bạn, chỉ thêm class CSS cho nút
         const ngannganmod = "https://han24521100.github.io/MakeMenoy/?data="; 
         const pminmod = "https://han24521100.github.io/MakeMenoy/sub/?data=";
 
-        function processLink() {
+        async function processLink() {
             const mainLink = document.getElementById("mainLink").value;
             const isPmin = document.getElementById("optPrefix").checked;
             const isNgan = document.getElementById("optUppercase").checked;
+            const btn = document.querySelector('.btn-main');
             
             if (!mainLink) {
-                alert("Vui lòng nhập link!");
+                showToast("Vui lòng nhập link!");
                 return;
             }
 
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Đang xử lý...';
+
             try {
                 let encodedLink = btoa(mainLink);
-                let finalResult = "";
+                let fullLink = "";
 
-                // Logic: Nếu chọn cả 2 hoặc chọn từng cái
-				if (isNgan && isPmin){
-					finalResult = ngannganmod + encodedLink;
-				}
-                else if (isNgan) {
-                    finalResult = ngannganmod + encodedLink;
+                if (isNgan && isPmin){
+					fullLink = ngannganmod + encodedLink;
+				} else if (isNgan) {
+                    fullLink = ngannganmod + encodedLink;
                 } else if (isPmin) {
-                    finalResult = pminmod + encodedLink;
+                    fullLink = pminmod + encodedLink;
                 } else {
-                    finalResult = pminmod + encodedLink;
+                    fullLink = pminmod + encodedLink;
                 }
 
-                document.getElementById("finalLink").innerText = finalResult;
-                document.getElementById("resultContainer").style.display = "block";
+                // Gọi API rút gọn link
+                const shortLink = await shortenLink(fullLink);
+                
+                if (shortLink) {
+                    document.getElementById("finalLink").innerText = shortLink;
+                    document.getElementById("resultContainer").style.display = "block";
+                } else {
+                    showToast("Lỗi khi rút gọn link!");
+                }
                 
             } catch (e) {
-                alert("Lỗi mã hóa! Link không được chứa ký tự tiếng Việt có dấu.");
+                showToast("Lỗi mã hóa! " + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Bắt Đầu Mã Hóa';
+            }
+        }
+
+        async function shortenLink(url) {
+            try {
+                const response = await fetch('https://pminmod.site/Same_With_BitLy/api.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        url: url,
+                        code: '' // để trống để tự động tạo mã
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    return result.shortUrl;
+                } else {
+                    console.error(result.error);
+                    return null;
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                return null;
             }
         }
 
         function copyToClipboard() {
 			const text = document.getElementById("finalLink").innerText;
 			
-			// Thực hiện Copy
 			navigator.clipboard.writeText(text).then(() => {
-				// Hiển thị Popup
-				const toast = document.getElementById("toast");
-				toast.className = "toast show";
-				
-				// Sau 2 giây (2000ms) thì tự tắt
-				setTimeout(function() {
-					toast.className = toast.className.replace("show", "");
-				}, 2000);
+				showToast("Đã sao chép liên kết!");
 			});
 		}
+
+        function showToast(message) {
+            const toast = document.getElementById("toast");
+            toast.innerText = message;
+            toast.className = "toast show";
+            
+            setTimeout(function() {
+                toast.className = toast.className.replace("show", "");
+            }, 2000);
+        }
     </script>
 </body>
 
 </html>
-
